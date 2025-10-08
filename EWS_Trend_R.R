@@ -22,17 +22,15 @@ require(tidyr)
 
 # library("devtools")
 # install_github("pachevalier/tricky")
-
 require(tricky)
 
-setwd("C:/Users/englishm/Documents/EWS/Shiny App/app/")
 
 #########################
 ##  make fig of plots  ##
 #########################
 
 #Read in EWS NL plots shapefile
-plots.sf <- st_read("data/EWS_NL_Plots.gdb")
+plots.sf <- st_read("C:/Users/englishm/Documents/EWS/NL/Shiny App/app/data/EWS_NL_Plots.gdb")
 
 
 ## #Append the .dbf file for the plots
@@ -73,9 +71,6 @@ plots.sf <- st_read("data/EWS_NL_Plots.gdb")
 # dms$dms <- paste(dms$DEG, dms$MIN, dms$SEC, sep = ":")
 # 
 # write.csv(dms, "EWS_NL_Plot_Centroids.csv")
-
-
-
 
 
 #################################
@@ -219,30 +214,32 @@ ggplot(data = ews.wf.sum, aes(x = reorder(species, -prop), y = prop, fill = regi
   xlab("Species") +
   ylab("Proportion")
 
-#ggsave("EWS_NL_SpeciesProportions_2024.tiff", width = 6, height = 5)
+#ggsave("EWS_NL_SpeciesProportions_2025.tiff", width = 6, height = 5)
 
 ##########################
 ##   CAGO clutch size   ##
 ##########################
 
-cago <- ews.sf[ews.sf$species == "CAGO",]
+cago <- ews.wf[ews.wf$species == "CAGO",]
+
+unique(cago$breedtype)
+unique(cago$breedcnt)
 
 ##i think the breed_type column is messed up, so just use all of it for now
-
-#cago <- filter(cago, breed_type == c("E", "O")) ##doesnt include anything from 2010-2019, so theres an error
+cago <- cago[cago$breedtype %in% c("E", "O"),] ##doesnt include anything from 2010-2019, so theres an error
 
 #deal with the 9999s
-cago$breed_cnt <- ifelse(cago$breed_cnt == "9999", NA, cago$breed_cnt)
+cago$breedcnt <- ifelse(cago$breedcnt == "9999", NA, cago$breedcnt)
 
 #deal with the 0s
-cago$breed_cnt <- ifelse(cago$breed_cnt == "0", NA, cago$breed_cnt)
+cago$breedcnt <- ifelse(cago$breedcnt == "0", NA, cago$breedcnt)
 
-
+#create summary DF for plotting
 cago <- cago %>%
   group_by(year) %>%
-  dplyr::summarise(mean_clutch = mean(breed_cnt, na.rm = T),
-                   sd_clutch = sd(breed_cnt, na.rm = T),
-                   n_nest = length(na.omit(breed_cnt)))
+  dplyr::summarise(mean_clutch = mean(breedcnt, na.rm = T),
+                   sd_clutch = sd(breedcnt, na.rm = T),
+                   n_nest = length(na.omit(breedcnt)))
 
 ggplot(cago, aes(x = year, y = mean_clutch)) +
   geom_point() +
@@ -258,7 +255,7 @@ ggplot(cago, aes(x = year, y = mean_clutch)) +
     #panel.border = element_rect(colour = "black", fill = NA, size = 1),
     text = element_text(size = 13)) +
   scale_y_continuous(limits = c(0, 8), expand = c(0,0)) +
-  scale_x_continuous(breaks = seq(1990,2024, by = 2)) +
+  scale_x_continuous(breaks = seq(1990,2025, by = 2)) +
   xlab("Year") +
   ylab("Mean CAGO clutch size ± SD") +
   annotate("rect", xmin = -Inf, xmax = Inf, ymin = 4.2, ymax = 5.2, fill = "black",
@@ -316,7 +313,7 @@ pair_abdu <- abdu %>%
   group_by(year) %>%
   filter(male == 0 & female == 0 & unknown == 2) %>%
   dplyr::summarise(pair_m=sum(TIP)) %>%
-  complete(year = seq(1990, 2024, by = 1))
+  complete(year = seq(1990, 2025, by = 1))
 
 pair_abdu$pair_m <- ifelse(is.na(pair_abdu$pair_m), 0, pair_abdu$pair_m)
 
@@ -325,7 +322,7 @@ truepair_abdu <- abdu %>%
   group_by(year) %>%
   filter(male == 1 & female == 1 & unknown == 0) %>%
   dplyr::summarise(pair_m=sum(TIP)) %>%
-  complete(year = seq(1990, 2024, by = 1))
+  complete(year = seq(1990, 2025, by = 1))
 
 truepair_abdu$pair_m <- ifelse(is.na(truepair_abdu$pair_m), 0, truepair_abdu$pair_m)
 
@@ -342,7 +339,7 @@ flock_abdu <-  abdu %>%
   group_by(year) %>%
   filter(male == 0 & female == 0 & unknown > 2) %>%
   dplyr::summarise(unk_flock=sum(TIP)) %>%
-  complete(year = seq(1990, 2024, by = 1))
+  complete(year = seq(1990, 2025, by = 1))
 
 flock_abdu$unk_flock <- ifelse(is.na(flock_abdu$unk_flock), 0, flock_abdu$unk_flock)
 
@@ -351,7 +348,7 @@ flock_m_abdu <- abdu %>%
   group_by(year) %>%
   filter(male > 0 & female == 0 & unknown == 0) %>%
   dplyr::summarise(males_flock=sum(TIP)) %>%
-  complete(year = seq(1990, 2024, by = 1))
+  complete(year = seq(1990, 2025, by = 1))
 
 flock_m_abdu$males_flock <- ifelse(is.na(flock_m_abdu$males_flock), 0, flock_m_abdu$males_flock)
 
@@ -420,7 +417,7 @@ truepair <- phen.sp %>%
   group_by(year) %>%
   filter(male == 1 & female == 1 & unknown == 0) %>%
   dplyr::summarise(pair_m=sum(TIP)) %>%
-  complete(year = seq(1990, 2024, by = 1))
+  complete(year = seq(1990, 2025, by = 1))
 
 truepair$pair_m <- ifelse(is.na(truepair$pair_m), 0, truepair$pair_m)
 
@@ -430,7 +427,7 @@ flock.m <- phen.sp %>%
   group_by(year) %>%
   filter(male > 0 & female == 0 & unknown == 0) %>%
   dplyr::summarise(males_flock=sum(TIP)) %>%
-  complete(year = seq(1990, 2024, by = 1))
+  complete(year = seq(1990, 2025, by = 1))
 
 flock.m$males_flock <- ifelse(is.na(flock.m$males_flock), 0, flock.m$males_flock)
 
