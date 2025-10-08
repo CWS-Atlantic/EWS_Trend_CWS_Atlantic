@@ -137,10 +137,6 @@ ews.sf$total <- ews.sf$male + ews.sf$female + ews.sf$unknown
 #strip whitespace from species names
 ews.sf$species <- gsub(" ", "", ews.sf$species)
 
-# # #filter based on some species
-ews.filter <- filter(ews.sf,
-                     species == " ABDU")
-
 #create a region variable
 ews.sf$region <- "NL"
 
@@ -407,7 +403,6 @@ abdu.p <- p
 mean(abdu.phen$mean, na.rm = T)
 sd(abdu.phen$mean, na.rm = T)
 range(abdu.phen$mean, na.rm = T)
-
 
 
 ######################################
