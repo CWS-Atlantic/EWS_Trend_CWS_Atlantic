@@ -124,9 +124,6 @@ names(ews.sf)[names(ews.sf) == 'species_e'] <- 'species'
 names(ews.sf)[names(ews.sf) == 'males'] <- 'male'
 names(ews.sf)[names(ews.sf) == 'females'] <- 'female'
 
-
-ews.sf <-  ews.sf[order(ews.sf$year),] 
-
 ews.sf$total <- ews.sf$male + ews.sf$female + ews.sf$unknown
 
 #strip whitespace from species names
@@ -574,8 +571,10 @@ str(ews.trend)
 ews.trend <- ews.trend %>%
   complete(species, plot = 1:52, year = 1990:2025, fill = list(total = NA, TIP = NA))
 
+######################################
+##  Create matrix of plot coverage  ##
+######################################
 
-################################################################################
 flown.df <- read.csv(file = "C:/Users/englishm/Documents/EWS/BDJV Tech report/Plots.csv") 
 flown.df$plot_ID <- paste(flown.df$year, flown.df$Plot, sep="_")
 flown.df$plot_ID <- as.factor(flown.df$plot_ID)
@@ -665,8 +664,8 @@ non.waterfowl.df$total <- ifelse(non.waterfowl.df$flown == FALSE, NA, non.waterf
 ###############################
 
 #Created DF based on species name
-abdu.df <- select_sp(x = sum.tip.obs, 
-                     sp = "ABDU" ,
+agwt.df <- select_sp(x = sum.tip.obs, 
+                     sp = "AGWT" ,
                      year = seq(1990,2025),
                      plots = c(1:52),
                      strata = c(1,2),
@@ -681,19 +680,19 @@ abdu.df <- select_sp(x = sum.tip.obs,
 # start the JAGS analysis #
 #-------------------------#
 
-abdu.jags <- dataForJAGS(abdu.df)
+agwt.jags <- dataForJAGS(agwt.df)
 
 
 start.time <- Sys.time()
 
 
-abdu.pois.model.results <- trend(abdu.jags, model="poisson", wdrive=jags_dir_path)
+agwt.pois.model.results <- trend(agwt.jags, model="poisson", wdrive=jags_dir_path)
 
-abdu.nb.model.results <- trend(abdu.jags, model="NB", wdrive=jags_dir_path)
+agwt.nb.model.results <- trend(agwt.jags, model="NB", wdrive=jags_dir_path)
  
-abdu.zip.model.results <- trend(abdu.jags, model="ZIP", wdrive=jags_dir_path)
+agwt.zip.model.results <- trend(agwt.jags, model="ZIP", wdrive=jags_dir_path)
 
-abdu.zinb.model.results <- trend(abdu.jags, model="ZINB", wdrive=jags_dir_path)
+agwt.zinb.model.results <- trend(agwt.jags, model="ZINB", wdrive=jags_dir_path)
 
 
 end.time <- Sys.time()
@@ -702,14 +701,14 @@ end.time - start.time
 
 #model diagnostics
 
-abdu.elpd <- loo::loo_compare(loo_fn(abdu.pois.model.results), #model 1 - poisson
-                              loo_fn(abdu.nb.model.results),   #model 2 - negative binomial
-                              loo_fn(abdu.zip.model.results),  #model 3 - zero-inflated poisson
-                              loo_fn(abdu.zinb.model.results)) #model 4 - zero-inflated negative binomial
+agwt.elpd <- loo::loo_compare(loo_fn(agwt.pois.model.results), #model 1 - poisson
+                              loo_fn(agwt.nb.model.results),   #model 2 - negative binomial
+                              loo_fn(agwt.zip.model.results),  #model 3 - zero-inflated poisson
+                              loo_fn(agwt.zinb.model.results)) #model 4 - zero-inflated negative binomial
 
-abdu.elpd
+agwt.elpd
 
-converge_fn(abdu.zinb.model.results)
+converge_fn(agwt.zinb.model.results)
 
 #jags.summary(agwt.nb.model.results)
 
@@ -772,7 +771,7 @@ converge_fn(herg.nb.model.results)
 #SPSA
 spsa.df <- select_sp(x = non.waterfowl.df, 
                      sp = "SPSA", 
-                     year = seq(1990, 2024),
+                     year = seq(1990, 2025),
                      plots = 1:52, 
                      strata = c(1,2), 
                      speciesname = "species", 
@@ -819,7 +818,7 @@ converge_fn(spsa.nb.model.results)
 #UNYE
 unye.df <- select_sp(x = non.waterfowl.df, 
                      sp = "UNYE", 
-                     year = seq(1990, 2024),
+                     year = seq(1990, 2025),
                      plots = 1:52, 
                      strata = c(1,2), 
                      speciesname = "species", 
@@ -994,16 +993,18 @@ susc.elpd$species <- "SUSC"
 ##bind all the elpd results together
 all.elpd <- rbind(abdu.elpd, #ZINB
                   agwt.elpd, #ZINB
-                  cago.elpd, #ZIP
+                  #cago.elpd, #ZIP
                   come.elpd, #NB
-                  cogo.elpd, #ZINB
-                  colo.elpd, #ZINB
+                  #cogo.elpd, #ZINB
+                  #colo.elpd, #ZINB
                   rbme.elpd, #ZINB
                   rndu.elpd, #ZINB
                   scau.elpd, #ZINB
                   susc.elpd) #ZINB
 
-# write.csv(all.elpd, file = "EWS_NL_2024_JAGS_ELPD_2Strata.csv")
+# write.csv(all.elpd, 
+#           file = "EWS_NL_2025_JAGS_ELPD_2Strata_Notallspecies.csv",
+#           row.names = F)
 
 
 ##################################################
@@ -1147,10 +1148,10 @@ global_plot(susc.jags, susc.zinb.model.results)
 
 all.stats <- rbind(abdu.stats,
                    agwt.stats,
-                   cago.stats,
+                   #cago.stats,
                    come.stats,
-                   cogo.stats,
-                   colo.stats,
+                   #cogo.stats,
+                   #colo.stats,
                    rbme.stats,
                    rndu.stats,
                    scau.stats,
@@ -1158,18 +1159,23 @@ all.stats <- rbind(abdu.stats,
 
 all.coef <- rbind(abdu.coef,
                    agwt.coef,
-                   cago.coef,
+                   #cago.coef,
                    come.coef,
-                   cogo.coef,
-                   colo.coef,
+                   #cogo.coef,
+                   #colo.coef,
                    rbme.coef,
                    rndu.coef,
                    scau.coef,
                    susc.coef)  
 
 
-#write.csv(all.stats, "EWS_NL_2024_JAGS_Outputs_2Strata.csv")
-#write.csv(all.coef, "EWS_NL_2024_JAGS_Coefs_2Strata.csv")
+# write.csv(all.stats, 
+#           "EWS_NL_2025_JAGS_Outputs_2Strata_Notallspecies.csv",
+#           row.names = F)
+
+# write.csv(all.coef, 
+#           "EWS_NL_2025_JAGS_Coefs_2Strata_Notallspecies.csv",
+#           row.names = F)
 
 
 ## non-waterfowl stats
@@ -1278,15 +1284,15 @@ p<- ggarrange(p.abdu, p.agwt, p.cago, p.cogo, p.colo, p.come, p.rbme, p.rndu, p.
 
 
 
-bird <- "CAGO"
+bird <- "SUSC"
 
 # #for TIP species
 # df <- all.stats[all.stats$species %in% bird,]
 
 # for non-TIP species
-df  <- non.wf.stats[non.wf.stats$species %in% bird,]
+# df  <- non.wf.stats[non.wf.stats$species %in% bird,]
 
-#df <- abdu.stats
+df <- susc.stats
 
 tip.min <- df$RawTIP_mean - df$RawTIP_se
 tip.max <- df$RawTIP_mean + df$RawTIP_se
@@ -1312,7 +1318,7 @@ pp2$Year <- seq(1990,2025)
 
 
 #start ggplot
-p.cago <- ggplot() +
+p.susc <- ggplot() +
   
   # geom_point(data = df,
   #            aes(x = Year, y = RawTIP_mean, colour = "Raw Data")) +
@@ -1432,7 +1438,7 @@ p.cago <- ggplot() +
   # ylab(NULL)
   ylab("TIP per 25km^2")
 
-p.cago
+p.susc
 
 #list of plots per species
 #p.abdu <- recordPlot()
@@ -1461,7 +1467,7 @@ ggarrange(p.cosn, p.herg, p.unye,
           ncol = 1,
           nrow = 3)
 
-ggsave(paste(bird, "2024_Trends.tiff", sep = "_"), width = 8, height = 6)
+ggsave(paste(bird, "2025_Trends.pdf", sep = "_"), width = 8, height = 6)
 
 
 
