@@ -262,7 +262,7 @@ mean(cago$mean_clutch, na.rm =T)
 sd(cago$mean_clutch, na.rm =T)
 range(cago$mean_clutch, na.rm =T)
 
-#ggsave("EWS_NL_CAGO_Clutch_2024.tiff", width = 8, height = 4)
+#ggsave("EWS_NL_CAGO_Clutch_2025.tiff", width = 8, height = 4)
 
 
 ##################
@@ -664,8 +664,8 @@ non.waterfowl.df$total <- ifelse(non.waterfowl.df$flown == FALSE, NA, non.waterf
 ###############################
 
 #Created DF based on species name
-agwt.df <- select_sp(x = sum.tip.obs, 
-                     sp = "AGWT" ,
+colo.df <- select_sp(x = sum.tip.obs, 
+                     sp = "COLO" ,
                      year = seq(1990,2025),
                      plots = c(1:52),
                      strata = c(1,2),
@@ -680,19 +680,19 @@ agwt.df <- select_sp(x = sum.tip.obs,
 # start the JAGS analysis #
 #-------------------------#
 
-agwt.jags <- dataForJAGS(agwt.df)
+colo.jags <- dataForJAGS(colo.df)
 
 
 start.time <- Sys.time()
 
 
-agwt.pois.model.results <- trend(agwt.jags, model="poisson", wdrive=jags_dir_path)
+colo.pois.model.results <- trend(colo.jags, model="poisson", wdrive=jags_dir_path)
 
-agwt.nb.model.results <- trend(agwt.jags, model="NB", wdrive=jags_dir_path)
+colo.nb.model.results <- trend(colo.jags, model="NB", wdrive=jags_dir_path)
  
-agwt.zip.model.results <- trend(agwt.jags, model="ZIP", wdrive=jags_dir_path)
+colo.zip.model.results <- trend(colo.jags, model="ZIP", wdrive=jags_dir_path)
 
-agwt.zinb.model.results <- trend(agwt.jags, model="ZINB", wdrive=jags_dir_path)
+colo.zinb.model.results <- trend(colo.jags, model="ZINB", wdrive=jags_dir_path)
 
 
 end.time <- Sys.time()
@@ -701,14 +701,14 @@ end.time - start.time
 
 #model diagnostics
 
-agwt.elpd <- loo::loo_compare(loo_fn(agwt.pois.model.results), #model 1 - poisson
-                              loo_fn(agwt.nb.model.results),   #model 2 - negative binomial
-                              loo_fn(agwt.zip.model.results),  #model 3 - zero-inflated poisson
-                              loo_fn(agwt.zinb.model.results)) #model 4 - zero-inflated negative binomial
+colo.elpd <- loo::loo_compare(loo_fn(colo.pois.model.results), #model 1 - poisson
+                              loo_fn(colo.nb.model.results),   #model 2 - negative binomial
+                              loo_fn(colo.zip.model.results),  #model 3 - zero-inflated poisson
+                              loo_fn(colo.zinb.model.results)) #model 4 - zero-inflated negative binomial
 
-agwt.elpd
+colo.elpd
 
-converge_fn(agwt.zinb.model.results)
+converge_fn(colo.zinb.model.results)
 
 #jags.summary(agwt.nb.model.results)
 
@@ -865,7 +865,7 @@ converge_fn(unye.zinb.model.results)
 #cosn
 cosn.df <- select_sp(x = non.waterfowl.df, 
                      sp = "COSN", 
-                     year = seq(1990, 2024),
+                     year = seq(1990, 2025),
                      plots = 1:52, 
                      strata = c(1,2), 
                      speciesname = "species", 
@@ -993,17 +993,17 @@ susc.elpd$species <- "SUSC"
 ##bind all the elpd results together
 all.elpd <- rbind(abdu.elpd, #ZINB
                   agwt.elpd, #ZINB
-                  #cago.elpd, #ZIP
+                  cago.elpd, #ZIP
                   come.elpd, #NB
-                  #cogo.elpd, #ZINB
-                  #colo.elpd, #ZINB
+                  cogo.elpd, #ZINB
+                  colo.elpd, #ZINB
                   rbme.elpd, #ZINB
                   rndu.elpd, #ZINB
                   scau.elpd, #ZINB
                   susc.elpd) #ZINB
 
-# write.csv(all.elpd, 
-#           file = "EWS_NL_2025_JAGS_ELPD_2Strata_Notallspecies.csv",
+# write.csv(all.elpd,
+#           file = "EWS_NL_2025_JAGS_ELPD_2Strata_Notallspecies1.csv",
 #           row.names = F)
 
 
@@ -1033,8 +1033,10 @@ non.wf.elpd <- rbind(cosn.elpd,
                      unye.elpd)#,
                      #unte.elpd)
 
-# write out the results
-#write.csv(non.wf.elpd, file = "EWS_NL_2024_JAGS_ELPD_Nonwaterfowl_2Strata.csv")
+# # write out the results
+# write.csv(non.wf.elpd, 
+#           file = "EWS_NL_2025_JAGS_ELPD_Nonwaterfowl_2Strata.csv",
+#           row.names = F)
 
 #American Black Duck
 abdu.stats <- plot_trends(abdu.jags, abdu.zinb.model.results, plot.type = "quantile", response="density", return.df = T)
@@ -1090,7 +1092,7 @@ cogo.coef$species <- "COGO"
 #Common Loon
 colo.stats <- plot_trends(colo.jags, colo.nb.model.results, plot.type = "quantile", response="density", return.df = T)
 colo.stats$species <- 'COLO'
-colo.stats$model <- "NB"
+colo.stats$model <- "ZINB"
 
 colo.coef <- as.data.frame(model_coef(colo.jags, colo.nb.model.results))
 
@@ -1148,33 +1150,33 @@ global_plot(susc.jags, susc.zinb.model.results)
 
 all.stats <- rbind(abdu.stats,
                    agwt.stats,
-                   #cago.stats,
+                   cago.stats,
                    come.stats,
-                   #cogo.stats,
-                   #colo.stats,
+                   cogo.stats,
+                   colo.stats,
                    rbme.stats,
                    rndu.stats,
                    scau.stats,
                    susc.stats)  
 
 all.coef <- rbind(abdu.coef,
-                   agwt.coef,
-                   #cago.coef,
-                   come.coef,
-                   #cogo.coef,
-                   #colo.coef,
-                   rbme.coef,
-                   rndu.coef,
-                   scau.coef,
-                   susc.coef)  
+                  agwt.coef,
+                  cago.coef,
+                  come.coef,
+                  cogo.coef,
+                  colo.coef,
+                  rbme.coef,
+                  rndu.coef,
+                  scau.coef,
+                  susc.coef)  
 
 
-# write.csv(all.stats, 
-#           "EWS_NL_2025_JAGS_Outputs_2Strata_Notallspecies.csv",
+# write.csv(all.stats,
+#           "EWS_NL_2025_JAGS_Outputs_2Strata_Notallspecies1.csv",
 #           row.names = F)
-
-# write.csv(all.coef, 
-#           "EWS_NL_2025_JAGS_Coefs_2Strata_Notallspecies.csv",
+# 
+# write.csv(all.coef,
+#           "EWS_NL_2025_JAGS_Coefs_2Strata_Notallspecies1.csv",
 #           row.names = F)
 
 
@@ -1231,14 +1233,19 @@ non.wf.stats <- rbind(cosn.stats,
                       unye.stats)#,
                       #unte.stats)
 
-non.wf.coef <-rbind(cosn.coef,
-                    herg.coef,
-                    spsa.coef,
-                    unye.coef)#,
+non.wf.coef <- rbind(cosn.coef,
+                     herg.coef,
+                     spsa.coef,
+                     unye.coef)#,
                     #unte.coef)
 
-#write.csv(non.wf.stats, "EWS_NL_2024_JAGS_Outputs_Nonwaterfowl_2Strata.csv")
-#write.csv(non.wf.coef, "EWS_NL_2024_JAGS_Coefs_Nonwaterfowl_2Strata.csv")
+# write.csv(non.wf.stats, 
+#           "EWS_NL_2025_JAGS_Outputs_Nonwaterfowl_2Strata.csv",
+#           row.names = F)
+# 
+# write.csv(non.wf.coef, 
+#           "EWS_NL_2025_JAGS_Coefs_Nonwaterfowl_2Strata.csv",
+#           row.names = F)
 
 
 median(all.stats$TIP_q50)
@@ -1251,7 +1258,7 @@ quantile(all.stats$TIP_q50, c(0.5))
 
 non.wf.stats <- read.csv("C:/Users/englishm/Documents/EWS/BDJV Tech report/Data/Outputs/By strata/EWS_NL_2024_JAGS_Outputs_Nonwaterfowl_2Strata.csv")
 
-all.stats <- read.csv("C:/Users/englishm/Documents/EWS/BDJV Tech report/Data/Outputs/By strata/EWS_NL_2024_JAGS_Outputs_2Strata.csv")
+all.stats <- read.csv("C:/Users/englishm/Documents/EWS/BDJV Tech report/Data/Outputs/By strata/EWS_NL_2025_JAGS_Outputs_2Strata.csv")
 
 ggplot(all.stats, aes(x = Year, y = RawTIP_mean)) +
   geom_line() +
@@ -1284,15 +1291,15 @@ p<- ggarrange(p.abdu, p.agwt, p.cago, p.cogo, p.colo, p.come, p.rbme, p.rndu, p.
 
 
 
-bird <- "SUSC"
+bird <- "COLO"
 
 # #for TIP species
-# df <- all.stats[all.stats$species %in% bird,]
+df <- all.stats[all.stats$species %in% bird,]
 
-# for non-TIP species
-# df  <- non.wf.stats[non.wf.stats$species %in% bird,]
+#for non-TIP species
+#df  <- non.wf.stats[non.wf.stats$species %in% bird,]
 
-df <- susc.stats
+#df <- susc.stats
 
 tip.min <- df$RawTIP_mean - df$RawTIP_se
 tip.max <- df$RawTIP_mean + df$RawTIP_se
@@ -1318,7 +1325,7 @@ pp2$Year <- seq(1990,2025)
 
 
 #start ggplot
-p.susc <- ggplot() +
+p.unye <- ggplot() +
   
   # geom_point(data = df,
   #            aes(x = Year, y = RawTIP_mean, colour = "Raw Data")) +
@@ -1438,7 +1445,7 @@ p.susc <- ggplot() +
   # ylab(NULL)
   ylab("TIP per 25km^2")
 
-p.susc
+p.unye
 
 #list of plots per species
 #p.abdu <- recordPlot()
@@ -1454,10 +1461,10 @@ p.susc
 #p.scau <- recordPlot()
 #p.susc <- recordPlot()
 
-p.cosn
-p.herg
-p.unye
-p.spsa
+# p.cosn
+# p.herg
+# p.unye
+# p.spsa
 
 # p.unye + geom_smooth(data = df,
 #                      aes(x = year, y = TIPpred_mean))
